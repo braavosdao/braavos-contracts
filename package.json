@@ -1,40 +1,49 @@
 {
-  "name": "olympus-contracts",
+  "name": "braavos-contracts",
   "version": "1.0.0",
-  "description": "Smart Contracts for Olympus",
-  "directories": {
-    "test": "test"
-  },
-  "dependencies": {
-    "@openzeppelin/contracts": "^3.4.0"
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "format": "prettier '**/*.{json,sol,md}' --write"
   },
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@atixlabs/hardhat-time-n-mine": "^0.0.5",
+    "@nomiclabs/hardhat-ethers": "^2.0.3",
+    "@nomiclabs/hardhat-etherscan": "^2.1.8",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
-    "@openzeppelin/test-helpers": "^0.5.12",
+    "@openzeppelin/hardhat-upgrades": "^1.12.0",
+    "@typechain/ethers-v5": "^7.2.0",
+    "@typechain/hardhat": "^2.3.1",
+    "@types/chai": "^4.2.22",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "^16.11.11",
+    "@typescript-eslint/eslint-plugin": "^4.33.0",
+    "@typescript-eslint/parser": "^4.33.0",
     "chai": "^4.3.4",
+    "dotenv": "^10.0.0",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.25.3",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^3.4.1",
+    "eslint-plugin-promise": "^5.2.0",
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.4.1",
     "hardhat": "^2.5.0",
-    "prettier": "^2.3.2",
-    "prettier-plugin-solidity": "^1.0.0-beta.17",
+    "hardhat-gas-reporter": "^1.0.6",
+    "prettier": "^2.5.0",
+    "prettier-plugin-solidity": "^1.0.0-beta.19",
     "solhint": "^3.3.6",
-    "solhint-plugin-prettier": "0.0.5"
+    "solidity-coverage": "^0.7.17",
+    "ts-node": "^10.4.0",
+    "typechain": "^5.2.0",
+    "typescript": "^4.5.2",
+    "@uniswap/v2-core": "^1.0.1",
+    "@uniswap/v2-periphery": "^1.1.0-beta.0"
   },
-  "scripts": {
-    "test": "npx hardhat test",
-    "compile": "npx hardhat compile",
-    "clean": "npx hardhat clean",
-    "start": "npx hardhat run scripts/deployAll.js",
-    "lint:sol": "solhint -f table contracts/**/*.sol"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/OlympusDAO/olympus-contracts.git"
-  },
-  "author": "",
-  "bugs": {
-    "url": "https://github.com/OlympusDAO/olympus-contracts/issues"
-  },
-  "homepage": "https://github.com/OlympusDAO/olympus-contracts#readme"
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.3.2",
+    "@openzeppelin/contracts-upgradeable": "^4.3.2"
+  }
 }

@@ -1,198 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.7.5;
 
-library SafeMath {
+import "./interfaces/ITreasury.sol";
 
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        require(c >= a, "SafeMath: addition overflow");
+import "./types/Ownable.sol";
+import "./types/ERC20.sol";
 
-        return c;
-    }
+import "./libraries/SafeMath.sol";
+import "./libraries/SafeERC20.sol";
 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        return sub(a, b, "SafeMath: subtraction overflow");
-    }
-
-    function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
-        require(b <= a, errorMessage);
-        uint256 c = a - b;
-
-        return c;
-    }
-
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-
-        uint256 c = a * b;
-        require(c / a == b, "SafeMath: multiplication overflow");
-
-        return c;
-    }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        return div(a, b, "SafeMath: division by zero");
-    }
-
-    function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
-        require(b > 0, errorMessage);
-        uint256 c = a / b;
-        return c;
-    }
-}
-
-library Address {
-
-  function isContract(address account) internal view returns (bool) {
-        // This method relies in extcodesize, which returns 0 for contracts in
-        // construction, since the code is only stored at the end of the
-        // constructor execution.
-
-        uint256 size;
-        // solhint-disable-next-line no-inline-assembly
-        assembly { size := extcodesize(account) }
-        return size > 0;
-    }
-
-    function functionCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
-        return _functionCallWithValue(target, data, 0, errorMessage);
-    }
-
-    function _functionCallWithValue(address target, bytes memory data, uint256 weiValue, string memory errorMessage) private returns (bytes memory) {
-        require(isContract(target), "Address: call to non-contract");
-
-        // solhint-disable-next-line avoid-low-level-calls
-        (bool success, bytes memory returndata) = target.call{ value: weiValue }(data);
-        if (success) {
-            return returndata;
-        } else {
-            if (returndata.length > 0) {
-                // solhint-disable-next-line no-inline-assembly
-                assembly {
-                    let returndata_size := mload(returndata)
-                    revert(add(32, returndata), returndata_size)
-                }
-            } else {
-                revert(errorMessage);
-            }
-        }
-    }
-
-    function _verifyCallResult(bool success, bytes memory returndata, string memory errorMessage) private pure returns(bytes memory) {
-        if (success) {
-            return returndata;
-        } else {
-            if (returndata.length > 0) {
-                // solhint-disable-next-line no-inline-assembly
-                assembly {
-                    let returndata_size := mload(returndata)
-                    revert(add(32, returndata), returndata_size)
-                }
-            } else {
-                revert(errorMessage);
-            }
-        }
-    }
-}
-
-interface IOwnable {
-  function manager() external view returns (address);
-
-  function renounceManagement() external;
-  
-  function pushManagement( address newOwner_ ) external;
-  
-  function pullManagement() external;
-}
-
-contract Ownable is IOwnable {
-
-    address internal _owner;
-    address internal _newOwner;
-
-    event OwnershipPushed(address indexed previousOwner, address indexed newOwner);
-    event OwnershipPulled(address indexed previousOwner, address indexed newOwner);
-
-    constructor () {
-        _owner = msg.sender;
-        emit OwnershipPushed( address(0), _owner );
-    }
-
-    function manager() public view override returns (address) {
-        return _owner;
-    }
-
-    modifier onlyManager() {
-        require( _owner == msg.sender, "Ownable: caller is not the owner" );
-        _;
-    }
-
-    function renounceManagement() public virtual override onlyManager() {
-        emit OwnershipPushed( _owner, address(0) );
-        _owner = address(0);
-    }
-
-    function pushManagement( address newOwner_ ) public virtual override onlyManager() {
-        require( newOwner_ != address(0), "Ownable: new owner is the zero address");
-        emit OwnershipPushed( _owner, newOwner_ );
-        _newOwner = newOwner_;
-    }
-    
-    function pullManagement() public virtual override {
-        require( msg.sender == _newOwner, "Ownable: must be new owner to pull");
-        emit OwnershipPulled( _owner, _newOwner );
-        _owner = _newOwner;
-    }
-}
-
-interface IERC20 {
-    function decimals() external view returns (uint8);
-
-    function balanceOf(address account) external view returns (uint256);
-
-    function transfer(address recipient, uint256 amount) external returns (bool);
-
-    function approve(address spender, uint256 amount) external returns (bool);
-
-    function totalSupply() external view returns (uint256);
-
-    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
-
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-library SafeERC20 {
-    using SafeMath for uint256;
-    using Address for address;
-
-    function safeTransfer(IERC20 token, address to, uint256 value) internal {
-        _callOptionalReturn(token, abi.encodeWithSelector(token.transfer.selector, to, value));
-    }
-
-    function safeTransferFrom(IERC20 token, address from, address to, uint256 value) internal {
-        _callOptionalReturn(token, abi.encodeWithSelector(token.transferFrom.selector, from, to, value));
-    }
-
-    function _callOptionalReturn(IERC20 token, bytes memory data) private {
-        bytes memory returndata = address(token).functionCall(data, "SafeERC20: low-level call failed");
-        if (returndata.length > 0) { // Return data is optional
-            // solhint-disable-next-line max-line-length
-            require(abi.decode(returndata, (bool)), "SafeERC20: ERC20 operation did not succeed");
-        }
-    }
-}
-
-interface IERC20Mintable {
-  function mint( uint256 amount_ ) external;
-
-  function mint( address account_, uint256 ammount_ ) external;
-}
-
-interface IOHMERC20 {
+interface IBRAVOERC20 {
     function burnFrom(address account_, uint256 amount_) external;
 }
 
@@ -200,7 +17,7 @@ interface IBondCalculator {
   function valuation( address pair_, uint amount_ ) external view returns ( uint _value );
 }
 
-contract OlympusTreasury is Ownable {
+contract Treasury is Ownable, ITreasury {
 
     using SafeMath for uint;
     using SafeERC20 for IERC20;
@@ -216,9 +33,9 @@ contract OlympusTreasury is Ownable {
     event ChangeQueued( MANAGING indexed managing, address queued );
     event ChangeActivated( MANAGING indexed managing, address activated, bool result );
 
-    enum MANAGING { RESERVEDEPOSITOR, RESERVESPENDER, RESERVETOKEN, RESERVEMANAGER, LIQUIDITYDEPOSITOR, LIQUIDITYTOKEN, LIQUIDITYMANAGER, DEBTOR, REWARDMANAGER, SOHM }
+    enum MANAGING { RESERVEDEPOSITOR, RESERVESPENDER, RESERVETOKEN, RESERVEMANAGER, LIQUIDITYDEPOSITOR, LIQUIDITYTOKEN, LIQUIDITYMANAGER, DEBTOR, REWARDMANAGER, SBRAVO }
 
-    address public immutable OHM;
+    address public immutable BRAVO;
     uint public immutable blocksNeededForQueue;
 
     address[] public reserveTokens; // Push only, beware false-positives.
@@ -260,42 +77,40 @@ contract OlympusTreasury is Ownable {
     mapping( address => bool ) public isRewardManager;
     mapping( address => uint ) public rewardManagerQueue; // Delays changes to mapping.
 
-    address public sOHM;
-    uint public sOHMQueue; // Delays change to sOHM address
-    
+    address public sBRAVO;
+    uint public sBRAVOQueue; // Delays change to sBRAVO address
+
     uint public totalReserves; // Risk-free value of all assets
     uint public totalDebt;
 
     constructor (
-        address _OHM,
+        address _BRAVO,
         address _DAI,
-        address _Frax,
-        address _OHMDAI,
+        address _BRAVODAI,
+        address _bondCalculator,
         uint _blocksNeededForQueue
     ) {
-        require( _OHM != address(0) );
-        OHM = _OHM;
+        require( _BRAVO != address(0) );
+        BRAVO = _BRAVO;
 
         isReserveToken[ _DAI ] = true;
         reserveTokens.push( _DAI );
 
-        isReserveToken[ _Frax] = true;
-        reserveTokens.push( _Frax );
-
-       isLiquidityToken[ _OHMDAI ] = true;
-       liquidityTokens.push( _OHMDAI );
+        isLiquidityToken[ _BRAVODAI ] = true;
+        liquidityTokens.push( _BRAVODAI );
+        bondCalculator[_BRAVODAI] = _bondCalculator;
 
         blocksNeededForQueue = _blocksNeededForQueue;
     }
 
     /**
-        @notice allow approved address to deposit an asset for OHM
+        @notice allow approved address to deposit an asset for BRAVO
         @param _amount uint
         @param _token address
         @param _profit uint
         @return send_ uint
      */
-    function deposit( uint _amount, address _token, uint _profit ) external returns ( uint send_ ) {
+    function deposit( uint _amount, address _token, uint _profit ) external override returns ( uint send_ ) {
         require( isReserveToken[ _token ] || isLiquidityToken[ _token ], "Not accepted" );
         IERC20( _token ).safeTransferFrom( msg.sender, address(this), _amount );
 
@@ -305,10 +120,10 @@ contract OlympusTreasury is Ownable {
             require( isLiquidityDepositor[ msg.sender ], "Not approved" );
         }
 
-        uint value = valueOf(_token, _amount);
-        // mint OHM needed and store amount of rewards for distribution
+        uint value = valueOfToken(_token, _amount);
+        // mint BRAVO needed and store amount of rewards for distribution
         send_ = value.sub( _profit );
-        IERC20Mintable( OHM ).mint( msg.sender, send_ );
+        IERC20Mintable( BRAVO ).mint( msg.sender, send_ );
 
         totalReserves = totalReserves.add( value );
         emit ReservesUpdated( totalReserves );
@@ -317,16 +132,16 @@ contract OlympusTreasury is Ownable {
     }
 
     /**
-        @notice allow approved address to burn OHM for reserves
+        @notice allow approved address to burn BRAVO for reserves
         @param _amount uint
         @param _token address
      */
-    function withdraw( uint _amount, address _token ) external {
+    function withdraw( uint _amount, address _token ) external override {
         require( isReserveToken[ _token ], "Not accepted" ); // Only reserves can be used for redemptions
         require( isReserveSpender[ msg.sender ] == true, "Not approved" );
 
-        uint value = valueOf( _token, _amount );
-        IOHMERC20( OHM ).burnFrom( msg.sender, value );
+        uint value = valueOfToken( _token, _amount );
+        IBRAVOERC20( BRAVO ).burnFrom( msg.sender, value );
 
         totalReserves = totalReserves.sub( value );
         emit ReservesUpdated( totalReserves );
@@ -345,9 +160,9 @@ contract OlympusTreasury is Ownable {
         require( isDebtor[ msg.sender ], "Not approved" );
         require( isReserveToken[ _token ], "Not accepted" );
 
-        uint value = valueOf( _token, _amount );
+        uint value = valueOfToken( _token, _amount );
 
-        uint maximumDebt = IERC20( sOHM ).balanceOf( msg.sender ); // Can only borrow against sOHM held
+        uint maximumDebt = IERC20( sBRAVO ).balanceOf( msg.sender ); // Can only borrow against sBRAVO held
         uint availableDebt = maximumDebt.sub( debtorBalance[ msg.sender ] );
         require( value <= availableDebt, "Exceeds debt limit" );
 
@@ -358,7 +173,7 @@ contract OlympusTreasury is Ownable {
         emit ReservesUpdated( totalReserves );
 
         IERC20( _token ).transfer( msg.sender, _amount );
-        
+
         emit CreateDebt( msg.sender, _token, _amount, value );
     }
 
@@ -373,7 +188,7 @@ contract OlympusTreasury is Ownable {
 
         IERC20( _token ).safeTransferFrom( msg.sender, address(this), _amount );
 
-        uint value = valueOf( _token, _amount );
+        uint value = valueOfToken( _token, _amount );
         debtorBalance[ msg.sender ] = debtorBalance[ msg.sender ].sub( value );
         totalDebt = totalDebt.sub( value );
 
@@ -384,18 +199,18 @@ contract OlympusTreasury is Ownable {
     }
 
     /**
-        @notice allow approved address to repay borrowed reserves with OHM
+        @notice allow approved address to repay borrowed reserves with BRAVO
         @param _amount uint
      */
-    function repayDebtWithOHM( uint _amount ) external {
+    function repayDebtWithBRAVO( uint _amount ) external {
         require( isDebtor[ msg.sender ], "Not approved" );
 
-        IOHMERC20( OHM ).burnFrom( msg.sender, _amount );
+        IBRAVOERC20( BRAVO ).burnFrom( msg.sender, _amount );
 
         debtorBalance[ msg.sender ] = debtorBalance[ msg.sender ].sub( _amount );
         totalDebt = totalDebt.sub( _amount );
 
-        emit RepayDebt( msg.sender, OHM, _amount, _amount );
+        emit RepayDebt( msg.sender, BRAVO, _amount, _amount );
     }
 
     /**
@@ -403,14 +218,14 @@ contract OlympusTreasury is Ownable {
         @param _token address
         @param _amount uint
      */
-    function manage( address _token, uint _amount ) external {
+    function manage( address _token, uint _amount ) external override {
         if( isLiquidityToken[ _token ] ) {
             require( isLiquidityManager[ msg.sender ], "Not approved" );
         } else {
             require( isReserveManager[ msg.sender ], "Not approved" );
         }
 
-        uint value = valueOf(_token, _amount);
+        uint value = valueOfToken(_token, _amount);
         require( value <= excessReserves(), "Insufficient reserves" );
 
         totalReserves = totalReserves.sub( value );
@@ -424,37 +239,37 @@ contract OlympusTreasury is Ownable {
     /**
         @notice send epoch reward to staking contract
      */
-    function mintRewards( address _recipient, uint _amount ) external {
+    function mintRewards( address _recipient, uint _amount ) external override {
         require( isRewardManager[ msg.sender ], "Not approved" );
         require( _amount <= excessReserves(), "Insufficient reserves" );
 
-        IERC20Mintable( OHM ).mint( _recipient, _amount );
+        IERC20Mintable( BRAVO ).mint( _recipient, _amount );
 
         emit RewardsMinted( msg.sender, _recipient, _amount );
-    } 
+    }
 
     /**
         @notice returns excess reserves not backing tokens
         @return uint
      */
-    function excessReserves() public view returns ( uint ) {
-        return totalReserves.sub( IERC20( OHM ).totalSupply().sub( totalDebt ) );
+    function excessReserves() public override view returns ( uint ) {
+        return totalReserves.sub( IERC20( BRAVO ).totalSupply().sub( totalDebt ) );
     }
 
     /**
         @notice takes inventory of all tracked assets
         @notice always consolidate to recognized reserves before audit
      */
-    function auditReserves() external onlyManager() {
+    function auditReserves() external onlyOwner() {
         uint reserves;
         for( uint i = 0; i < reserveTokens.length; i++ ) {
-            reserves = reserves.add ( 
-                valueOf( reserveTokens[ i ], IERC20( reserveTokens[ i ] ).balanceOf( address(this) ) )
+            reserves = reserves.add (
+                valueOfToken( reserveTokens[ i ], IERC20( reserveTokens[ i ] ).balanceOf( address(this) ) )
             );
         }
         for( uint i = 0; i < liquidityTokens.length; i++ ) {
             reserves = reserves.add (
-                valueOf( liquidityTokens[ i ], IERC20( liquidityTokens[ i ] ).balanceOf( address(this) ) )
+                valueOfToken( liquidityTokens[ i ], IERC20( liquidityTokens[ i ] ).balanceOf( address(this) ) )
             );
         }
         totalReserves = reserves;
@@ -463,15 +278,15 @@ contract OlympusTreasury is Ownable {
     }
 
     /**
-        @notice returns OHM valuation of asset
+        @notice returns BRAVO valuation of asset
         @param _token address
         @param _amount uint
         @return value_ uint
      */
-    function valueOf( address _token, uint _amount ) public view returns ( uint value_ ) {
+    function valueOfToken( address _token, uint _amount ) public view override returns ( uint value_ ) {
         if ( isReserveToken[ _token ] ) {
-            // convert amount to match OHM decimals
-            value_ = _amount.mul( 10 ** IERC20( OHM ).decimals() ).div( 10 ** IERC20( _token ).decimals() );
+            // convert amount to match BRAVO decimals
+            value_ = _amount.mul( 10 ** IERC20( BRAVO ).decimals() ).div( 10 ** IERC20( _token ).decimals() );
         } else if ( isLiquidityToken[ _token ] ) {
             value_ = IBondCalculator( bondCalculator[ _token ] ).valuation( _token, _amount );
         }
@@ -483,7 +298,7 @@ contract OlympusTreasury is Ownable {
         @param _address address
         @return bool
      */
-    function queue( MANAGING _managing, address _address ) external onlyManager() returns ( bool ) {
+    function queue( MANAGING _managing, address _address ) external onlyOwner() returns ( bool ) {
         require( _address != address(0) );
         if ( _managing == MANAGING.RESERVEDEPOSITOR ) { // 0
             reserveDepositorQueue[ _address ] = block.number.add( blocksNeededForQueue );
@@ -503,8 +318,8 @@ contract OlympusTreasury is Ownable {
             debtorQueue[ _address ] = block.number.add( blocksNeededForQueue );
         } else if ( _managing == MANAGING.REWARDMANAGER ) { // 8
             rewardManagerQueue[ _address ] = block.number.add( blocksNeededForQueue );
-        } else if ( _managing == MANAGING.SOHM ) { // 9
-            sOHMQueue = block.number.add( blocksNeededForQueue );
+        } else if ( _managing == MANAGING.SBRAVO ) { // 9
+            sBRAVOQueue = block.number.add( blocksNeededForQueue );
         } else return false;
 
         emit ChangeQueued( _managing, _address );
@@ -518,7 +333,7 @@ contract OlympusTreasury is Ownable {
         @param _calculator address
         @return bool
      */
-    function toggle( MANAGING _managing, address _address, address _calculator ) external onlyManager() returns ( bool ) {
+    function toggle( MANAGING _managing, address _address, address _calculator ) external onlyOwner() returns ( bool ) {
         require( _address != address(0) );
         bool result;
         if ( _managing == MANAGING.RESERVEDEPOSITOR ) { // 0
@@ -530,7 +345,7 @@ contract OlympusTreasury is Ownable {
             }
             result = !isReserveDepositor[ _address ];
             isReserveDepositor[ _address ] = result;
-            
+
         } else if ( _managing == MANAGING.RESERVESPENDER ) { // 1
             if ( requirements( reserveSpenderQueue, isReserveSpender, _address ) ) {
                 reserveSpenderQueue[ _address ] = 0;
@@ -614,9 +429,9 @@ contract OlympusTreasury is Ownable {
             result = !isRewardManager[ _address ];
             isRewardManager[ _address ] = result;
 
-        } else if ( _managing == MANAGING.SOHM ) { // 9
-            sOHMQueue = 0;
-            sOHM = _address;
+        } else if ( _managing == MANAGING.SBRAVO ) { // 9
+            sBRAVOQueue = 0;
+            sBRAVO = _address;
             result = true;
 
         } else return false;
@@ -630,12 +445,12 @@ contract OlympusTreasury is Ownable {
         @param queue_ mapping( address => uint )
         @param status_ mapping( address => bool )
         @param _address address
-        @return bool 
+        @return bool
      */
-    function requirements( 
-        mapping( address => uint ) storage queue_, 
-        mapping( address => bool ) storage status_, 
-        address _address 
+    function requirements(
+        mapping( address => uint ) storage queue_,
+        mapping( address => bool ) storage status_,
+        address _address
     ) internal view returns ( bool ) {
         if ( !status_[ _address ] ) {
             require( queue_[ _address ] != 0, "Must queue" );
